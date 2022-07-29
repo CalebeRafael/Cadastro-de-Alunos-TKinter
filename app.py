@@ -1,31 +1,51 @@
 import tkinter as tk
 import sqlite3
 import pandas as pd
+import datetime as dt
  
-# conexao = sqlite3.connect('banco_alunos.db')
+conexao = sqlite3.connect('banco_alunos.db')
 
-# c = conexao.cursor()
+c = conexao.cursor()
 
-# c.execute('''CREATE TABLE alunos (
-#     nome text,
-#     dia text,
-#     horas text
-# )
-# ''')
+c.execute('''CREATE TABLE IF NOT EXISTS alunos (
+    nome text,
+    dia text,
+    horas integer,
+    total_horas integer,
+    data_criacao text
 
-# conexao.commit()
-# conexao.close()
+)
+''')
+
+conexao.commit()
+conexao.close()
+
+def total():
+    conexao = sqlite3.connect('banco_alunos.db')
+
+    c = conexao.cursor()
+
+    c.execute('SELECT SUM(horas) FROM alunos')
+
+    conexao.commit()
+    conexao.close()
+
 
 def cadastrar_aluno():
     conexao = sqlite3.connect('banco_alunos.db')
 
     c = conexao.cursor()
 
-    c.execute('INSERT INTO alunos VALUES (:nome, :dia, :horas)', 
+    data_criacao =  dt.datetime.now()
+  
+    c.execute('INSERT INTO alunos VALUES (:nome, :dia, :horas, :total_horas, :data_criacao)', 
     {
         'nome': entry_nome.get(),
         'dia': entry_dia.get(), 
-        'horas': entry_horas.get()
+        'horas': entry_horas.get(),
+        'total_horas': total(),        
+        'data_criacao': data_criacao.strftime("%d/%m/%Y %H:%M")
+        
     }
     )
 
