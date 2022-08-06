@@ -21,7 +21,8 @@ class ConectarDB:
         try:
             self.cur.execute('''CREATE TABLE IF NOT EXISTS alunos (
                 aluno TEXT,
-                hora_aula INTEGER,
+                inicio TEXT,
+                fim TEXT,
                 data TEXT)''')
         except Exception as e:
             print('[x] Falha ao criar tabela: %s [x]' % e)
@@ -29,10 +30,10 @@ class ConectarDB:
             print('\n[!] Tabela criada com sucesso [!]\n')
 
 
-    def inserir_registro(self, aluno, hora_aula, data):
+    def inserir_registro(self, aluno, inicio, fim, data):
         try:
             self.cur.execute(
-                '''INSERT INTO alunos VALUES (?, ?, ?)''', (aluno, hora_aula, data,))
+                '''INSERT INTO alunos VALUES (?, ?, ?, ?)''', (aluno, inicio, fim, data,))
         except Exception as e:
             print('\n[x] Falha ao inserir registro [x]\n')
             print('[x] Revertendo operação (rollback) %s [x]\n' % e)
@@ -106,39 +107,47 @@ class Janela(tk.Frame):
         label_aluno = tk.Label(frame1, text='Nome do Aluno')
         label_aluno.grid(row=0, column=0)
 
-        label_hora_aula = tk.Label(frame1, text='Hora Aula')
-        label_hora_aula.grid(row=0, column=1)
+        label_inicio = tk.Label(frame1, text='Início')
+        label_inicio.grid(row=0, column=1)
+
+        label_fim = tk.Label(frame1, text='Fim')
+        label_fim.grid(row=0, column=2)
         
         label_data = tk.Label(frame1, text= 'Data')
-        label_data.grid(row=0, column=2)
+        label_data.grid(row=0, column=3)
 
         data = data_criacao.strftime("%d/%m/%Y")
         label_data = tk.Label(frame1, text= data)
-        label_data.grid(row=1, column=2)
+        label_data.grid(row=1, column=3)
 
         # Entrada de texto.
         self.entry_aluno = tk.Entry(frame1)
         self.entry_aluno.grid(row=1, column=0)
 
-        self.entry_hora_aula = tk.Entry(frame1)
-        self.entry_hora_aula.grid(row=1, column=1, padx=10)
+        self.entry_inicio = tk.Entry(frame1)
+        self.entry_inicio.grid(row=1, column=1, padx=10)
+
+        self.entry_fim = tk.Entry(frame1)
+        self.entry_fim.grid(row=1, column=2, padx=10)
 
         # Botão para adicionar um novo registro.
         button_adicionar = tk.Button(frame1, text='Adicionar', bg='blue', fg='white')
         # Método que é chamado quando o botão é clicado.
         button_adicionar['command'] = self.adicionar_registro
-        button_adicionar.grid(row=0, column=3, rowspan=2, padx=10)
+        button_adicionar.grid(row=0, column=4, rowspan=4, padx=30)
+        
 
         # Treeview.
-        self.treeview = tkk.Treeview(frame2, columns=('Nome do Aluno', 'Hora Aula', 'Data'))
+        self.treeview = tkk.Treeview(frame2, columns=('Nome do Aluno', 'Início', 'Fim','Data'))
         self.treeview.heading('#0', text='ID')
         self.treeview.heading('#1', text='Nome do Aluno')
-        self.treeview.heading('#2', text='Hora Aula')
-        self.treeview.heading('#3', text='Data')
+        self.treeview.heading('#2', text='Início')
+        self.treeview.heading('#3', text='Fim')
+        self.treeview.heading('#4', text='Data')
 
         # Inserindo os dados do banco no treeview.
         for row in self.banco.consultar_registros():
-            self.treeview.insert('', 'end', text=row[0], values=(row[1], row[2], row[3]))
+            self.treeview.insert('', 'end', text=row[0], values=(row[1], row[2], row[3], row[4]))
 
         self.treeview.pack(fill=tk.BOTH, expand=True)
 
@@ -152,8 +161,12 @@ class Janela(tk.Frame):
     def adicionar_registro(self):
         # Coletando os valores.    
         aluno = self.entry_aluno.get()
-        hora_aula = self.entry_hora_aula.get()
+        inicio = self.entry_inicio.get()
+        fim = self.entry_fim.get()
         data = data_criacao.strftime("%d/%m/%Y %H:%M")
+        self.entry_aluno.delete(0, "end")
+        self.entry_inicio.delete(0, "end")
+        self.entry_fim.delete(0, "end")
        
 
         # Validação simples (utilizar datetime deve ser melhor para validar).
@@ -162,13 +175,13 @@ class Janela(tk.Frame):
         # Se a data digitada passar na validação
         if validar_data:
             # Dados digitando são inseridos no banco de dados
-            self.banco.inserir_registro(aluno=aluno, hora_aula=hora_aula, data=data)
+            self.banco.inserir_registro(aluno=aluno, inicio=inicio, fim=fim, data=data)
 
             # Coletando a ultima rowid que foi inserida no banco.
             rowid = self.banco.consultar_ultimo_rowid()[0]
 
             # Adicionando os novos dados no treeview.
-            self.treeview.insert('', 'end', text=rowid, values=(aluno, hora_aula, data))
+            self.treeview.insert('', 'end', text=rowid, values=(aluno, inicio, fim, data))
         else:
             # Caso a data não passe na validação é exibido um alerta.
             messagebox.showerror('Erro', 'Padrão de data incorreto, utilize dd/mm/yyyy')
