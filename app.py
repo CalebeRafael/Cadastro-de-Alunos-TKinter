@@ -5,6 +5,7 @@ import tkinter.ttk as tkk
 from tkinter import messagebox
 import datetime as dt
 from datetime import datetime, timedelta
+import databases as db
 
 data_criacao =  dt.datetime.now()  
 
@@ -115,6 +116,16 @@ class Janela(tk.Frame):
         label_fim = tk.Label(frame1, text='Fim')
         label_fim.grid(row=0, column=2)
         
+        #CONEXAO PARA MOSTRAR TOTAL EM CIMA
+        conexao = sqlite3.connect('dados.db')
+        c = conexao.cursor()      
+        c.execute("SELECT SUM(soma) FROM alunos") 
+        total = (c.fetchall()[0][0])
+        conexao.close()
+
+        label_total = tk.Label(frame1, text=total)
+        label_total.grid(row=1, column=5)
+
         label_total = tk.Label(frame1, text='Total')
         label_total.grid(row=0, column=5)
         
@@ -200,6 +211,7 @@ class Janela(tk.Frame):
         self.entry_aluno.delete(0, "end")
         self.entry_inicio.delete(0, "end")
         self.entry_fim.delete(0, "end")
+
        
         # Validação simples (utilizar datetime deve ser melhor para validar).
         validar_data = re.search(r'(..)/(..)/(....)', data)
