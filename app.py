@@ -23,9 +23,9 @@ class ConectarDB:
         try:
             self.cur.execute('''CREATE TABLE IF NOT EXISTS alunos (
                 aluno TEXT,
-                inicio TEXT,
-                fim TEXT,
-                soma TEXT,
+                inicio TIME,
+                fim TIME,
+                soma TIME,
                 data TEXT)''')
         except Exception as e:
             print('[x] Falha ao criar tabela: %s [x]' % e)
@@ -118,8 +118,8 @@ class Janela(tk.Frame):
         
         #CONEXAO PARA MOSTRAR TOTAL EM CIMA
         conexao = sqlite3.connect('dados.db')
-        c = conexao.cursor()      
-        c.execute("SELECT SUM(soma) FROM alunos") 
+        c = conexao.cursor()   
+        c.execute("SELECT time(sum(strftime('%s', soma) - strftime('%s', '00:00:00')), 'unixepoch') FROM alunos")  
         total = (c.fetchall()[0][0])
         conexao.close()
 
