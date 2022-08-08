@@ -6,6 +6,7 @@ from tkinter import messagebox
 import datetime as dt
 from datetime import datetime, timedelta
 import databases as db
+import pandas as pd
 
 data_criacao =  dt.datetime.now()  
 
@@ -66,6 +67,11 @@ class ConectarDB:
             print('\n[!] Registro removido com sucesso [!]\n')
 
 
+    def total(self):
+        self.cur.execute("SELECT time(sum(strftime('%s', soma) - strftime('%s', '00:00:00')), 'unixepoch') FROM alunos")  
+        return (self.cur.fetchall()[0][0])        
+        
+
 #INTERFACE
 
 class Janela(tk.Frame):
@@ -114,16 +120,9 @@ class Janela(tk.Frame):
         label_inicio.grid(row=0, column=1)
 
         label_fim = tk.Label(frame1, text='Fim')
-        label_fim.grid(row=0, column=2)
+        label_fim.grid(row=0, column=2)         
         
-        #CONEXAO PARA MOSTRAR TOTAL EM CIMA
-        conexao = sqlite3.connect('dados.db')
-        c = conexao.cursor()   
-        c.execute("SELECT time(sum(strftime('%s', soma) - strftime('%s', '00:00:00')), 'unixepoch') FROM alunos")  
-        total = (c.fetchall()[0][0])
-        conexao.close()
-
-        label_total = tk.Label(frame1, text=total)
+        label_total = tk.Label(frame1, text=self.banco.total())
         label_total.grid(row=1, column=5)
 
         label_total = tk.Label(frame1, text='Total')
@@ -177,6 +176,10 @@ class Janela(tk.Frame):
         button_excluir['command'] = self.excluir_registro
         button_excluir.pack(pady=10)
 
+        # BOTÃO PARA EXPORTAR PLANILHA EXCEL.
+        button_exportar = tk.Button(frame1, text='Exportar Tabela',  bg='black', fg='white' )
+        button_exportar['command'] = self.exportar_alunos
+        button_exportar.grid(row=0, column=6, rowspan=4, padx=400)
 
     def adicionar_registro(self):
 
@@ -249,6 +252,18 @@ class Janela(tk.Frame):
             # Removendo valor do treeview.
             self.treeview.delete(item_selecionado)
 
+
+    def exportar_alunos(self):
+    
+        conexao = sqlite3.connect('dados.db')
+        c = conexao.cursor()   
+
+        c.execute("SELECT *, oid FROM alunos")
+        alunos_cadastrados = c.fetchall()
+        alunos_cadastrados = pd.DataFrame(alunos_cadastrados, columns=["aluno", 'inicio', "fim", "soma", "data", "ID"])
+        alunos_cadastrados.to_excel("banco_alunos.xlsx")
+        conexao.commit()
+        conexao.close()              
 
 root = tk.Tk()
 app = Janela(master=root)
