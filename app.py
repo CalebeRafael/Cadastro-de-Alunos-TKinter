@@ -2,11 +2,14 @@ import re
 import sqlite3
 import tkinter as tk
 import tkinter.ttk as tkk
-from tkinter import messagebox
+from tkinter import RIGHT, messagebox
 import datetime as dt
-from datetime import datetime, timedelta
+from datetime import datetime
+from turtle import left, right
 import databases as db
 import pandas as pd
+from termcolor import colored
+
 
 data_criacao =  dt.datetime.now()  
 
@@ -27,17 +30,18 @@ class ConectarDB:
                 inicio TIME,
                 fim TIME,
                 soma TIME,
-                data TEXT)''')
+                data TEXT,
+                total TIME)''')
         except Exception as e:
             print('[x] Falha ao criar tabela: %s [x]' % e)
         else:
             print('\n[!] Tabela criada com sucesso [!]\n')
 
 
-    def inserir_registro(self, aluno, inicio, fim, soma, data):
+    def inserir_registro(self, aluno, inicio, fim, soma, data, total):
         try:
             self.cur.execute(
-                '''INSERT INTO alunos VALUES (?, ?, ?, ?, ?)''', (aluno, inicio, fim, soma, data))
+                '''INSERT INTO alunos VALUES (?, ?, ?, ?, ?, ?)''', (aluno, inicio, fim, soma, data, total))
         except Exception as e:
             print('\n[x] Falha ao inserir registro [x]\n')
             print('[x] Revertendo operação (rollback) %s [x]\n' % e)
@@ -113,26 +117,26 @@ class Janela(tk.Frame):
         frame3.pack(side=tk.BOTTOM, padx=10)
 
         # Labels.
-        label_aluno = tk.Label(frame1, text='Nome do Aluno')
+        label_aluno = tk.Label(frame1, text='Nome do Aluno', font="ComicSans 12 bold", fg="black")
         label_aluno.grid(row=0, column=0)
 
-        label_inicio = tk.Label(frame1, text='Início')
+        label_inicio = tk.Label(frame1, text='Início', font="ComicSans 12 bold", fg="black")
         label_inicio.grid(row=0, column=1)
 
-        label_fim = tk.Label(frame1, text='Fim')
+        label_fim = tk.Label(frame1, text='Fim', font="ComicSans 12 bold", fg="black")
         label_fim.grid(row=0, column=2)         
         
-        label_total = tk.Label(frame1, text=self.banco.total())
+        label_total = tk.Label(frame1, text=self.banco.total(), font="ComicSans 10")
         label_total.grid(row=1, column=5)
 
-        label_total = tk.Label(frame1, text='Total')
+        label_total = tk.Label(frame1, text='Total', font="ComicSans 12 bold", fg="black")
         label_total.grid(row=0, column=5)
         
-        label_data = tk.Label(frame1, text= 'Data')
+        label_data = tk.Label(frame1, text= 'Data', font="ComicSans 12 bold", fg="black")
         label_data.grid(row=0, column=3)
 
         data = data_criacao.strftime("%d/%m/%Y")
-        label_data = tk.Label(frame1, text= data)
+        label_data = tk.Label(frame1, text= data, font="ComicSans 10")
         label_data.grid(row=1, column=3)
 
         # Entrada de texto.
@@ -143,26 +147,16 @@ class Janela(tk.Frame):
         self.entry_inicio.grid(row=1, column=1, padx=10)
 
         self.entry_fim = tk.Entry(frame1)
-        self.entry_fim.grid(row=1, column=2, padx=10)
-
-        # self.entry_total = tk.Entry(frame1)
-        # self.entry_total.grid(row=1, column=3, padx=10)
+        self.entry_fim.grid(row=1, column=2, padx=10)            
         
-        # Botão para adicionar um novo registro.
-        button_adicionar = tk.Button(frame1, text='Adicionar', bg='blue', fg='white')
-        # Método que é chamado quando o botão é clicado.
-        button_adicionar['command'] = self.adicionar_registro
-        button_adicionar.grid(row=0, column=4, rowspan=4, padx=30)
-        
-
         # Treeview.
         self.treeview = tkk.Treeview(frame2, columns=('Nome do Aluno', 'Início', 'Fim', 'Soma', 'Data'))
-        self.treeview.heading('#0', text='ID')
-        self.treeview.heading('#1', text='Nome do Aluno')
-        self.treeview.heading('#2', text='Início')
-        self.treeview.heading('#3', text='Fim')
-        self.treeview.heading('#4', text='Soma')
-        self.treeview.heading('#5', text='Data')
+        self.treeview.heading('#0', text= "ID")
+        self.treeview.heading('#1', text= f"{'Aluno': <60}")        
+        self.treeview.heading('#2', text=f"{'Início': <60}")
+        self.treeview.heading('#3', text=f"{'Fim': <60}")
+        self.treeview.heading('#4', text=f"{'Soma': <60}")
+        self.treeview.heading('#5', text=f"{'Data': <60}")
 
         # Inserindo os dados do banco no treeview.
         for row in self.banco.consultar_registros():
@@ -170,16 +164,24 @@ class Janela(tk.Frame):
 
         self.treeview.pack(fill=tk.BOTH, expand=True)
 
+        # Botão para adicionar um novo registro.
+        button_adicionar = tk.Button(frame1, text='Adicionar', bg='blue', fg='white', font="ComicSans 12 bold")
+        # Método que é chamado quando o botão é clicado.
+        button_adicionar['command'] = self.adicionar_registro
+        button_adicionar.grid(row=0, column=6, rowspan=4, ipadx=10, padx=50)
+
         # Botão para remover um item.
-        button_excluir = tk.Button(frame3, text='Excluir', bg='red', fg='white')
+        button_excluir = tk.Button(frame3, text='Excluir', bg='red', fg='white', font="ComicSans 12 bold")
         # Método que é chamado quando o botão é clicado.
         button_excluir['command'] = self.excluir_registro
-        button_excluir.pack(pady=10)
+        button_excluir.pack(pady=30)
 
-        # BOTÃO PARA EXPORTAR PLANILHA EXCEL.
-        button_exportar = tk.Button(frame1, text='Exportar Tabela',  bg='black', fg='white' )
+        # Botão para exportar planilha do Excel.
+        button_exportar = tk.Button(frame1, text='Exportar Tabela',  bg='black', fg='white', font="ComicSans 12 bold")
+        # Método que é chamado quando o botão é clicado.
         button_exportar['command'] = self.exportar_alunos
-        button_exportar.grid(row=0, column=6, rowspan=4, padx=400)
+        button_exportar.grid(row=0, column=7, rowspan=2, ipadx=1)
+
 
     def adicionar_registro(self):
 
@@ -208,13 +210,15 @@ class Janela(tk.Frame):
         diff = saida - entrada        
         minutes = int(diff.total_seconds()) // 60
         soma = f'{minutes // 60:02}:{minutes % 60:02}'
+
+        #TOTAL
+        total = self.banco.total()
             
         #DATA DA CRIAÇÃO
         data = data_criacao.strftime("%d/%m/%Y %H:%M")
         self.entry_aluno.delete(0, "end")
         self.entry_inicio.delete(0, "end")
         self.entry_fim.delete(0, "end")
-
        
         # Validação simples (utilizar datetime deve ser melhor para validar).
         validar_data = re.search(r'(..)/(..)/(....)', data)
@@ -222,7 +226,7 @@ class Janela(tk.Frame):
         # Se a data digitada passar na validação
         if validar_data:
             # Dados digitando são inseridos no banco de dados
-            self.banco.inserir_registro(aluno=aluno, inicio=inicio, fim=fim, soma=soma, data=data)
+            self.banco.inserir_registro(aluno=aluno, inicio=inicio, fim=fim, soma=soma, data=data, total=total)
 
             # Coletando a ultima rowid que foi inserida no banco.
             rowid = self.banco.consultar_ultimo_rowid()[0]
@@ -260,10 +264,11 @@ class Janela(tk.Frame):
 
         c.execute("SELECT *, oid FROM alunos")
         alunos_cadastrados = c.fetchall()
-        alunos_cadastrados = pd.DataFrame(alunos_cadastrados, columns=["aluno", 'inicio', "fim", "soma", "data", "ID"])
+        alunos_cadastrados = pd.DataFrame(alunos_cadastrados, columns=["aluno", 'inicio', "fim", "soma", "data", "total", "ID"])
         alunos_cadastrados.to_excel("banco_alunos.xlsx")
         conexao.commit()
-        conexao.close()              
+        conexao.close()  
+
 
 root = tk.Tk()
 app = Janela(master=root)
