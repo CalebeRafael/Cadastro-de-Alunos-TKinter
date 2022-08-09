@@ -2,13 +2,10 @@ import re
 import sqlite3
 import tkinter as tk
 import tkinter.ttk as tkk
-from tkinter import RIGHT, messagebox
+from tkinter import messagebox
 import datetime as dt
 from datetime import datetime
-from turtle import left, right
-import databases as db
 import pandas as pd
-from termcolor import colored
 
 
 data_criacao =  dt.datetime.now()  
@@ -216,10 +213,12 @@ class Janela(tk.Frame):
             
         #DATA DA CRIAÇÃO
         data = data_criacao.strftime("%d/%m/%Y %H:%M")
+
+        #APAGAR OS CAMPOS PREENCHIDOS
         self.entry_aluno.delete(0, "end")
         self.entry_inicio.delete(0, "end")
         self.entry_fim.delete(0, "end")
-       
+               
         # Validação simples (utilizar datetime deve ser melhor para validar).
         validar_data = re.search(r'(..)/(..)/(....)', data)
 
